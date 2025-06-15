@@ -1,9 +1,9 @@
 import math
 from math import log10, sqrt, cos, pi
 from scipy.fftpack import fft
-from utils import *
-import utils
-from utils import HANN as hann
+from .utils import *
+from .utils import HANN as hann, BARK
+import numpy as np
 
 
 def bandwidth(processing,
@@ -154,12 +154,12 @@ def harmstruct(processing, state, rate=16000, harmsamples=1024):
     return (EHStmp * 1000.0 / n), EHStmp
 
 
-def moddiff(Modtest, Modref, Etilderef, fC):
+def moddiff(Modtest, Modref, Etildetmp, fC):
     ModDiff1 = 0
     ModDiff2 = 0
     TempWt = 0
 
-    for k in range(utils.BARK):
+    for k in range(BARK):
         ModDiff1 += np.abs(Modtest[k] - Modref[k]) / (1.0 + Modref[k])
         if Modtest[k] > Modref[k]:
             ModDiff2 += np.abs(Modtest[k] - Modref[k]) / (0.01 + Modref[k])
@@ -167,10 +167,10 @@ def moddiff(Modtest, Modref, Etilderef, fC):
             ModDiff2 += 0.1 * np.abs(Modtest[k] - Modref[k]) / (0.01 + Modref[k])
 
         Pthres = np.power(10.0, 0.4 * 0.364 * np.power(fC[k] / 1000.0, -0.8))
-        TempWt += Etilderef[k] / (Etilderef[k] + np.power(Pthres, 0.3) * 100.0)
+        TempWt += Etildetmp[k] / (Etildetmp[k] + np.power(Pthres, 0.3) * 100.0)
 
-    ModDiff1 *= 100.0 / utils.BARK
-    ModDiff2 *= 100.0 / utils.BARK
+    ModDiff1 *= 100.0 / BARK
+    ModDiff2 *= 100.0 / BARK
 
     return ModDiff1, ModDiff2, TempWt
 
@@ -371,7 +371,7 @@ def noiseloudness(Modtest, Modref, lev, nltmp, n, fC):
 
         nl += (Pthres / (E0 * stest)) ** 0.23 * ((1.0 + num / denom) ** 0.23 - 1.0)
 
-    nl *= 24.0 / utils.BARK
+    nl *= 24.0 / BARK
     if nl < 0:
         nl = 0
 

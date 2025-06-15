@@ -1,19 +1,19 @@
 import argparse
-from do_spreading import *
-from time_spreading import *
-from fft_ear_model import *
-from utils import *
-from group_into_bands import *
-from create_bark import *
-from modulation import *
+from .do_spreading import *
+from .time_spreading import *
+from .fft_ear_model import *
+from .utils import *
+from .group_into_bands import *
+from .create_bark import *
+from .modulation import *
 import soundfile as sf
 from soundfile import SoundFile
-from threshold import *
+from .threshold import *
 import numpy as np
-from MOV import *
+from .MOV import *
 from scipy.io import wavfile
-from wavfile_utils import *
-from neural import *
+from .wavfile_utils import *
+from .neural import *
 from tqdm import tqdm
 
 
@@ -223,12 +223,16 @@ def process_audio_files(ref_filename: str, test_filename: str):
     ref_blocks, ref_rate = read_and_process_soundfile(ref_filename)
     test_blocks, test_rate = read_and_process_soundfile(test_filename)
 
+    # 确保两个音频文件的块数相同
+    min_blocks = min(len(ref_blocks), len(test_blocks))
+    ref_blocks = ref_blocks[:min_blocks]
+    test_blocks = test_blocks[:min_blocks]
+
     processed_blocks_list = []
     state = init_state()
-    num_blocks = len(ref_blocks)
     result = {"MOV_list": [], "DI_list": [], "ODG_list": []}
 
-    for i in tqdm(range(num_blocks)):
+    for i in tqdm(range(min_blocks)):
         boundaryflag = boundary(ref_blocks[i], test_blocks[i], ref_rate)
         proc, state, movs, di, odg = process_audio_block(
             ref_blocks[i],
@@ -246,7 +250,7 @@ def process_audio_files(ref_filename: str, test_filename: str):
 
     avg_DI = np.mean(result["DI_list"])
     avg_ODG = np.mean(result["ODG_list"])
-    print(f"Distortion Index: {avg_DI}, Objective Difference Grade: {avg_ODG}")
+    return avg_ODG  # 只返回 ODG 值
 
 
 if __name__ == "__main__":
